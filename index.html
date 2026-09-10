@@ -834,7 +834,7 @@
                 <div class="quick">
                     <button class="qbtn cash" onclick="openScreen('cash')">💵<b>Cash Sale</b><span>Immediate sale</span></button>
                     <button class="qbtn challan" onclick="openScreen('challan')">🧾<b>Challan Sale</b><span>Party sale & due</span></button>
-                    <button class="qbtn payment" onclick="openScreen('payment')">💳<b>Payment Receive</b><span>Against challan</span></button>
+                    <button class="qbtn payment" onclick="openScreen('payment')">💳<b>Payment Receive</b><span>Normal Deposit / Challan</span></button>
                     <button class="qbtn advance" onclick="openScreen('advance')">🟢<b>Advance</b><span>Money before goods</span></button>
                     <button class="qbtn reportbtn" onclick="openScreen('reports')">📊<b>Full Reports</b><span>View / PDF</span></button>
                 </div>
@@ -877,7 +877,7 @@
             <!-- PAYMENT -->
             <section id="payment" class="screen">
                 <div class="page-title">💳 Payment Receive</div>
-                <div class="sub">Customer and Challan No are required.</div>
+                <div class="sub">Normal deposit or Challan payment — choose payment type.</div>
                 <div id="paymentEntries"></div>
                 <div class="actions">
                     <button class="btn primary" onclick="addEntry('payment')">＋ Add Another</button>
@@ -998,7 +998,7 @@
             <div class="quick">
                 <button class="qbtn cash" onclick="closeModal();openScreen('cash')">💵<b>Cash Sale</b><span>Immediate</span></button>
                 <button class="qbtn challan" onclick="closeModal();openScreen('challan')">🧾<b>Challan Sale</b><span>Party</span></button>
-                <button class="qbtn payment" onclick="closeModal();openScreen('payment')">💳<b>Payment</b><span>Against Challan</span></button>
+                <button class="qbtn payment" onclick="closeModal();openScreen('payment')">💳<b>Payment</b><span>Normal Deposit / Challan</span></button>
                 <button class="qbtn advance" onclick="closeModal();openScreen('advance')">🟢<b>Advance</b><span>Future purchase</span></button>
                 <button class="qbtn reportbtn" onclick="closeModal();openScreen('reports')">📊<b>Reports</b><span>View PDF</span></button>
             </div>
@@ -1027,7 +1027,7 @@
         ===================================================== */
 
         const API_URL =
-            'https://script.google.com/macros/s/AKfycbxZhOB9VKYiEvRQu29PXaE7xdeRk-zifKqNSSsASbnUZ_KAP8m57CyCn5vHXW0yn5y9fQ/exec';
+            'https://script.google.com/macros/s/AKfycbxrCYzcjwj36Z3tNnAnWkHXIt3_-c9GXSzF5wFv7i_XfgwajgJyqLwkQnipwLrESefyCw/exec';
 
 
         let state = {
@@ -1191,10 +1191,9 @@
                                     quantity: 100, amount: 12000, remarks: '' }
                             ],
                             payments: [
-                                { date: from, customer: 'Rajesh', challanNo: 'CH-101', method: 'UPI', amount: 10000,
-                                    remarks: '' },
-                                { date: from, customer: 'Meera', challanNo: 'CH-102', method: 'Cash', amount: 5000,
-                                    remarks: '' }
+                                { date: from, customer: 'Rajesh Construction', paymentType: 'normal', challanNo: 'NORMAL', method: 'Cash Deposit', amount: 20000, remarks: 'Normal cash deposit' },
+                                { date: from, customer: 'Rajesh Construction', paymentType: 'challan', challanNo: 'CH-101', method: 'Bank', amount: 10000, remarks: 'Against CH-101' },
+                                { date: from, customer: 'Meera', paymentType: 'challan', challanNo: 'CH-102', method: 'Cash', amount: 5000, remarks: '' }
                             ],
                             advances: [
                                 { date: from, customer: 'Vikram', method: 'Bank', amount: 3000, remarks: '' }
@@ -1218,11 +1217,10 @@
                             advance: 2000
                         },
                         ledger: [
-                            { date: today(), type: 'Challan Sale', challanNo: 'CH-101', amount: 24000,
-                                remarks: 'Bricks' },
+                            { date: today(), type: 'Challan Sale', challanNo: 'CH-101', amount: 24000, remarks: 'Bricks' },
+                            { date: today(), type: 'Normal Cash Deposit', challanNo: 'NORMAL', amount: 20000, remarks: 'Cash received' },
                             { date: today(), type: 'Payment', challanNo: 'CH-101', amount: 10000, remarks: 'UPI' },
-                            { date: today(), type: 'Challan Sale', challanNo: 'CH-105', amount: 18000,
-                                remarks: 'Steel' }
+                            { date: today(), type: 'Challan Sale', challanNo: 'CH-105', amount: 18000, remarks: 'Steel' }
                         ]
                     };
                 case 'dueList':
@@ -1243,10 +1241,8 @@
                     return {
                         parties: filteredParties,
                         challans: [
-                            { challanNo: 'CH-101', customer: 'Rajesh', saleAmount: 24000, paidAmount: 10000,
-                                due: 14000, status: 'PARTIAL' },
-                            { challanNo: 'CH-102', customer: 'Meera', saleAmount: 12000, paidAmount: 5000,
-                                due: 7000, status: 'PARTIAL' }
+                            { challanNo: 'CH-101', customer: 'Rajesh', saleAmount: 24000, paidAmount: 10000, due: 14000, status: 'PARTIAL' },
+                            { challanNo: 'CH-102', customer: 'Meera', saleAmount: 12000, paidAmount: 5000, due: 7000, status: 'PARTIAL' }
                         ]
                     };
                 default:
@@ -1466,17 +1462,25 @@
                                             <input data-f="party" placeholder="Enter customer name">
                                         </div>
                                     </div>
+                                    <div class="field">
+                                        <label>Payment Type *</label>
+                                        <select data-f="paymentType" onchange="togglePaymentType(this)">
+                                            <option value="normal">Normal Cash Deposit</option>
+                                            <option value="challan">Challan Payment</option>
+                                        </select>
+                                    </div>
                                     <div class="grid2">
-                                        <div class="field">
+                                        <div class="field challanField" style="display:none;">
                                             <label>Challan No *</label>
                                             <input data-f="challan" placeholder="Enter challan number">
                                         </div>
                                         <div class="field">
-                                            <label>Payment Method</label>
+                                            <label>Payment Method *</label>
                                             <select data-f="method">
-                                                <option>Cash</option>
+                                                <option>Cash Deposit</option>
                                                 <option>Bank</option>
                                                 <option>UPI</option>
+                                                <option>Cash</option>
                                                 <option>Other</option>
                                             </select>
                                         </div>
@@ -1541,6 +1545,27 @@
 
 
         /* =====================================================
+           TOGGLE PAYMENT TYPE
+        ===================================================== */
+
+        function togglePaymentType(sel) {
+            const entry = sel.closest('.entry');
+            const challanField = entry.querySelector('.challanField');
+            const challanInput = entry.querySelector('[data-f="challan"]');
+            if (sel.value === 'challan') {
+                if (challanField) challanField.style.display = '';
+                if (challanInput) challanInput.required = true;
+            } else {
+                if (challanField) challanField.style.display = 'none';
+                if (challanInput) {
+                    challanInput.required = false;
+                    challanInput.value = '';
+                }
+            }
+        }
+
+
+        /* =====================================================
            CALCULATE
         ===================================================== */
 
@@ -1562,10 +1587,21 @@
         function validateEntries(id, type) {
             const box = document.getElementById(id);
             for (const entry of box.children) {
-                const required = type === 'payment' ? ['date', 'party', 'challan', 'amount'] :
-                    type === 'advance' ? ['date', 'party', 'amount'] :
-                    type === 'cash' ? ['date', 'product', 'rate', 'qty'] :
-                    ['date', 'party', 'challan', 'product', 'rate', 'qty'];
+                let required;
+                if (type === 'payment') {
+                    const ptype = entry.querySelector('[data-f="paymentType"]')?.value || 'normal';
+                    if (ptype === 'challan') {
+                        required = ['date', 'party', 'paymentType', 'challan', 'method', 'amount'];
+                    } else {
+                        required = ['date', 'party', 'paymentType', 'method', 'amount'];
+                    }
+                } else if (type === 'advance') {
+                    required = ['date', 'party', 'method', 'amount'];
+                } else if (type === 'cash') {
+                    required = ['date', 'product', 'rate', 'qty'];
+                } else {
+                    required = ['date', 'party', 'challan', 'product', 'rate', 'qty'];
+                }
                 for (const field of required) {
                     const el = entry.querySelector(`[data-f="${field}"]`);
                     if (!el || !el.value) {
@@ -1584,7 +1620,7 @@
         function collectEntries(id, type) {
             return [...document.getElementById(id).children].map(entry => {
                 const v = field => entry.querySelector(`[data-f="${field}"]`)?.value || '';
-                return {
+                const base = {
                     date: v('date'),
                     partyName: v('party'),
                     productId: v('product'),
@@ -1595,6 +1631,14 @@
                     method: v('method'),
                     remarks: v('remarks')
                 };
+                if (type === 'payment') {
+                    const ptype = v('paymentType') || 'normal';
+                    base.paymentType = ptype;
+                    if (ptype === 'normal') {
+                        base.challanNo = 'NORMAL';
+                    }
+                }
+                return base;
             });
         }
 
@@ -1869,10 +1913,7 @@
             const r = state.report;
             if (!r) return;
 
-            // Combine cash and challan sales
             const allSales = [...(r.cashSales || []), ...(r.challanSales || [])];
-
-            // Aggregate by product name
             const productMap = {};
 
             allSales.forEach(sale => {
@@ -1890,7 +1931,6 @@
                 productMap[productName].salesCount += 1;
             });
 
-            // Convert to array and sort by total amount (highest first)
             r.productSummary = Object.values(productMap)
                 .sort((a, b) => b.totalAmount - a.totalAmount);
         }
@@ -1909,7 +1949,6 @@
             try {
                 const response = await apiGet('report', { from: from, to: to });
                 state.report = response.report;
-                // Generate product summary from the report data
                 generateProductSummary();
                 renderReport();
             } catch (error) {
@@ -2128,7 +2167,7 @@
                                         <div class="tablewrap">
                                             <table>
                                                 <thead>
-                                                    <tr><th>Date</th><th>Customer</th><th>Challan</th><th>Method</th><th>Amount</th><th>Remarks</th></tr>
+                                                    <tr><th>Date</th><th>Customer</th><th>Payment Type</th><th>Challan</th><th>Method</th><th>Amount</th><th>Remarks</th></tr>
                                                 </thead>
                                                 <tbody>
                                                     ${r.payments.length ?
@@ -2136,13 +2175,14 @@
                                                             <tr>
                                                                 <td>${esc(x.date)}</td>
                                                                 <td>${esc(x.customer)}</td>
+                                                                <td>${esc(x.paymentType === 'normal' ? 'Normal Cash Deposit' : 'Challan Payment')}</td>
                                                                 <td>${esc(x.challanNo)}</td>
                                                                 <td>${esc(x.method)}</td>
                                                                 <td><b>${money(x.amount)}</b></td>
                                                                 <td>${esc(x.remarks)}</td>
                                                             </tr>
                                                         `).join('') :
-                                                        '<tr><td colspan="6">No Payment Receive.</td></tr>'
+                                                        '<tr><td colspan="7">No Payment Receive.</td></tr>'
                                                     }
                                                 </tbody>
                                             </table>
@@ -2185,7 +2225,6 @@
                 return;
             }
 
-            // PRODUCT SUMMARY
             if (currentReportTab === 'product') {
                 const productSummary = r.productSummary || [];
                 const totalAmount = productSummary.reduce((sum, p) => sum + p.totalAmount, 0);
@@ -2254,7 +2293,6 @@
                 const to = r.to || today();
                 const productSummary = r.productSummary || [];
 
-                // Header
                 doc.setFontSize(20);
                 doc.text('KRISHNANAGAR', 14, 15);
                 doc.setFontSize(10);
@@ -2263,7 +2301,6 @@
 
                 let y = 39;
 
-                // SUMMARY
                 doc.setFontSize(11);
                 doc.text('BUSINESS SUMMARY', 14, y);
                 y += 4;
@@ -2287,7 +2324,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // CASH SALE
                 const cashSales = r.cashSales || [];
                 doc.setFontSize(11);
                 doc.text('CASH SALE', 14, y);
@@ -2307,7 +2343,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // CHALLAN SALE
                 const challanSales = r.challanSales || [];
                 doc.setFontSize(11);
                 doc.text('CHALLAN SALE', 14, y);
@@ -2327,7 +2362,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // STATUS
                 const outstanding = r.outstanding || [];
                 doc.setFontSize(11);
                 doc.text('CHALLAN DUE / PAYMENT STATUS', 14, y);
@@ -2347,7 +2381,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // PAYMENT RECEIVE
                 const payments = r.payments || [];
                 doc.setFontSize(11);
                 doc.text('PAYMENT RECEIVE', 14, y);
@@ -2355,10 +2388,12 @@
                 doc.autoTable({
                     startY: y,
                     head: [
-                        ['Date', 'Customer', 'Challan', 'Method', 'Amount', 'Remarks']
+                        ['Date', 'Customer', 'Type', 'Challan', 'Method', 'Amount', 'Remarks']
                     ],
                     body: payments.map(x => [
-                        x.date || '', x.customer || '', x.challanNo || '',
+                        x.date || '', x.customer || '',
+                        x.paymentType === 'normal' ? 'Normal Cash Deposit' : 'Challan Payment',
+                        x.challanNo || '',
                         x.method || 'Cash', pdfMoney(x.amount || 0), x.remarks || ''
                     ]),
                     theme: 'grid',
@@ -2366,7 +2401,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // ADVANCE
                 const advances = r.advances || [];
                 doc.setFontSize(11);
                 doc.text('ADVANCE PAYMENT', 14, y);
@@ -2385,7 +2419,6 @@
                 });
                 y = doc.lastAutoTable.finalY + 8;
 
-                // PRODUCT SUMMARY
                 doc.setFontSize(11);
                 doc.text('PRODUCT WISE SALES SUMMARY', 14, y);
                 y += 4;
@@ -2406,7 +2439,6 @@
                     styles: { fontSize: 8 }
                 });
 
-                // FOOTER
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
