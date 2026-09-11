@@ -1581,12 +1581,26 @@
 
 
         /* =====================================================
-           VALIDATION
+           VALIDATION (FIXED — includes precise field error)
         ===================================================== */
 
         function validateEntries(id, type) {
             const box = document.getElementById(id);
+            const labels = {
+                date: 'Date',
+                party: 'Customer Name',
+                challan: 'Challan No',
+                product: 'Product',
+                rate: 'Rate',
+                qty: 'Quantity',
+                amount: 'Amount',
+                method: 'Payment Method',
+                paymentType: 'Payment Type'
+            };
+
+            let entryIndex = 0;
             for (const entry of box.children) {
+                entryIndex++;
                 let required;
                 if (type === 'payment') {
                     const ptype = entry.querySelector('[data-f="paymentType"]')?.value || 'normal';
@@ -1600,12 +1614,30 @@
                 } else if (type === 'cash') {
                     required = ['date', 'product', 'rate', 'qty'];
                 } else {
+                    // Challan Sale
                     required = ['date', 'party', 'challan', 'product', 'rate', 'qty'];
                 }
+
                 for (const field of required) {
                     const el = entry.querySelector(`[data-f="${field}"]`);
-                    if (!el || !el.value) {
+                    if (!el) {
+                        toast(`Entry #${entryIndex}: Field "${labels[field] || field}" not found.`, false);
                         return false;
+                    }
+                    const val = String(el.value || '').trim();
+                    if (val === '') {
+                        toast(`Entry #${entryIndex}: Please fill "${labels[field] || field}".`, false);
+                        try { el.focus(); } catch (e) {}
+                        return false;
+                    }
+                    // Numeric checks
+                    if (field === 'rate' || field === 'qty' || field === 'amount') {
+                        const num = Number(val);
+                        if (isNaN(num) || num <= 0) {
+                            toast(`Entry #${entryIndex}: "${labels[field]}" must be greater than 0.`, false);
+                            try { el.focus(); } catch (e) {}
+                            return false;
+                        }
                     }
                 }
             }
@@ -1649,7 +1681,7 @@
 
         async function saveCash() {
             if (!validateEntries('cashEntries', 'cash')) {
-                return toast('Complete all Cash Sale fields.', false);
+                return;
             }
             try {
                 const response = await apiPost({ action: 'cashSale', items: collectEntries('cashEntries', 'cash') });
@@ -1664,7 +1696,7 @@
 
         async function saveChallans() {
             if (!validateEntries('challanEntries', 'challan')) {
-                return toast('Complete all Challan fields.', false);
+                return;
             }
             try {
                 const response = await apiPost({ action: 'challanSale', items: collectEntries('challanEntries',
@@ -1680,7 +1712,7 @@
 
         async function savePayments() {
             if (!validateEntries('paymentEntries', 'payment')) {
-                return toast('Complete all Payment fields.', false);
+                return;
             }
             try {
                 const response = await apiPost({ action: 'payment', items: collectEntries('paymentEntries', 'payment') });
@@ -1695,7 +1727,7 @@
 
         async function saveAdvances() {
             if (!validateEntries('advanceEntries', 'advance')) {
-                return toast('Complete all Advance fields.', false);
+                return;
             }
             try {
                 const response = await apiPost({ action: 'advance', items: collectEntries('advanceEntries', 'advance') });
